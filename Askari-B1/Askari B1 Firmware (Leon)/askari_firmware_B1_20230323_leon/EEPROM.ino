@@ -79,3 +79,8 @@ void update_EEPROM_numbers(){
           
    }
 }
+
+void update_alarm_state(){
+  EEPROM.update(ARMED_STATE_IDX, armed);
+  delay(100);
+}

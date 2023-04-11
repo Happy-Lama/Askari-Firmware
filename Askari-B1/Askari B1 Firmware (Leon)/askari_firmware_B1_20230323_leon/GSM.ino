@@ -43,6 +43,12 @@ void intruder_alert_call(){
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void check_sms_command(String sms_msg){
+/*
+--function to respond to any sms command
+--checks the received message against programmed sms commands for arming and disarming
+--takes appropriate action for received sms  
+*/
+  
   int number_index = sms_msg.indexOf("\"");
   String phone_number = sms_msg.substring(number_index, number_index + 15);
       
@@ -50,14 +56,21 @@ void check_sms_command(String sms_msg){
   String msg = sms_msg.substring(msg_index + 3, sms_msg.length() - 2); 
       
   if(validate_phone_number(phone_number) && msg == ARM_SYSTEM){
+    
     armed = 1;
     arming = 1;
+    update_alarm_state();
     send_message("System Armed", phone_number);
+    
     sms_msg = "";
+    
   } else if(validate_phone_number(phone_number) && msg == DISARM_SYSTEM){
+    
     armed = 0;
+    update_alarm_state();
     send_message("System Disarmed", phone_number);
     sms_msg = "";
+    
   }
 }
 

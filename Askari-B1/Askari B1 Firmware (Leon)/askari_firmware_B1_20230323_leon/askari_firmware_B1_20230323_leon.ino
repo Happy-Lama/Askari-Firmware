@@ -9,6 +9,7 @@
 #define DISARM_SYSTEM "DISARM"
 #define MAX_NUMBERS 3
 #define SECURITY_BREACH_SMS "SECURITY BREACH"
+#define ARMED_STATE_IDX 39
 
 SoftwareSerial gsm_serial(8, 7);
 
@@ -86,9 +87,16 @@ void setup() {
 
   gsm_serial.println("AT+CNMI=2,2,0,0,0");
   delay(100);
-
+  
+//  check for registered phone numbers and load them in
   if(EEPROM.read(0) != 255){
     update_phone_numbers();
+  }
+
+//check for perrvious alarm state and load it in the armed variable
+//for when there are unexpected power outages and the alarm was armed before
+  if(EEPROM.read(ARMED_STATE_IDX) != 255){
+    armed = EEPROM.read(ARMED_STATE_IDX);
   }
 
 
@@ -111,7 +119,6 @@ void loop() {
   if(armed){
     if(arming){
       arm_system();
-      arming = 0;
     }
     armed_state();
   }
@@ -119,6 +126,4 @@ void loop() {
   if(alarm_state){
     sound_alarm();
   }
-
-  
 }

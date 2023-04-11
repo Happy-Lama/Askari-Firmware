@@ -19,6 +19,9 @@ void print_to_serial(){
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 int check_serial(){
+
+//checks serial for any incoming data and stores data in a variable
+//data_from_serial -> variable that stores data received from serial
   if(Serial.available() > 0){
     while(Serial.available() > 0){
       incoming_char = (char)Serial.read();
@@ -83,6 +86,7 @@ void arm_system(){
     number_of_buzzes = 0;
     toggle_buzzer(600, 0);
     buzzer_state = 0;
+    arming = 0;
   }
 
 }
