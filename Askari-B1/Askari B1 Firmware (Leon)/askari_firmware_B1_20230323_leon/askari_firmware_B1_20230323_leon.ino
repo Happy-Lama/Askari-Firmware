@@ -10,8 +10,10 @@
 #define SECURITY_BREACH_SMS "SECURITY BREACH"
 #define ARMED_STATE_IDX 39
 #define PASSCODE_IDX 40
+#define SIM_CARD_ERROR_BUZZER_DURATION 7000
 
 SoftwareSerial gsm_serial(8, 7);
+//SoftwareSerial Serial(0, 1);
 
 uint8_t sensor_zone[7] = {A0, A1, A2, A3, A4, A5, 2};
 uint8_t zone_state_indicator[7] = {13, 12, 11, 10, 9, 6, 5};
@@ -28,11 +30,14 @@ String data_from_serial = "";
 char incoming_char;
 
 String sms_msg = "";
+//String error_msg = "";
 
 //System State Variables
 bool armed = 0;
 bool arming = 0;
 bool alarm_state = 0;
+bool sim_card_error = 0;
+//bool sending_msg = 0;
 
 //buzzer timer variables
 long int alarm_on_duration = 150;
@@ -43,8 +48,11 @@ long int buzzer_start_time = 0;
 const long int alarm_duration = 20000; //in milliseconds
 const long int arming_duration = 10000; //in milliseconds
 bool buzzer_timer_started = 0;
+long int sim_card_error_buzzer_start_time = 0;
 
 String current_passcode = "";
+
+byte times_repeated = 0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -84,10 +92,19 @@ void setup() {
 
   gsm_serial.println("AT+CMGF=1");
   delay(100);
-
+  
   gsm_serial.println("AT+CNMI=2,2,0,0,0");
   delay(100);
 
+  //check for any sim card error
+  check_gsm();
+  if(check_error(sms_msg)){
+    sim_card_error = 1;
+  }
+  Serial.println(sms_msg);
+  sms_cleanup();
+  Serial.println(sim_card_error);
+  
   //load saved phone numbers in eeprom to memory
   if(EEPROM.read(0) != 255){
     update_phone_numbers();
@@ -112,9 +129,15 @@ void setup() {
 }
 
 void loop() {
-
+  
+//  if(sim_card_error && (millis() - sim_card_error_buzzer_start_time >= SIM_CARD_ERROR_BUZZER_DURATION) && !arming && !alarm_state){
+//    digitalWrite(Buzzer, HIGH);
+//    delay(100);
+//    digitalWrite(Buzzer, LOW);
+//    sim_card_error_buzzer_start_time = millis();
+//    Serial.println("SIMCARD ERROR");
+//  }
    //system functions decision tree
-   
   if(check_gsm() && sms_msg != ""){
     check_sms_command(sms_msg);
   }
@@ -139,5 +162,4 @@ void loop() {
   if(alarm_state){
     sound_alarm();
   }
-
 }

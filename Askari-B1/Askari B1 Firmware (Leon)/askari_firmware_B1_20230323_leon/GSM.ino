@@ -9,35 +9,60 @@ void intruder_alert_call(){
 --message the registered phone numbers to alert of a security breach
 */
   
-  Serial.println("Intruder Alert Call");
+  if(sim_card_error){
+    Serial.println();
+    Serial.println("ERROR: SIM CARD MISSING OR UNRESPONSIVE");
+    Serial.println();
+
+    gsm_serial.println("AT");
+  delay(1000);
+
+  gsm_serial.println("AT+CMGF=1");
+  delay(100);
   
-  for(uint8_t n = 0; n < 3; n++){
+  gsm_serial.println("AT+CNMI=2,2,0,0,0");
+  delay(100);
+
+  //check for any sim card error
+  check_gsm();
+  if(check_error(sms_msg)){
+    sim_card_error = 1;
+  } else {
+    sim_card_error = 0;
+  }
+  Serial.println(sms_msg);
+  sms_cleanup();
+    
+  } else {
+    Serial.println("Intruder Alert Call");
+  
+    for(uint8_t n = 0; n < 3; n++){
     
     //CALL
 
-    if(phone_numbers[n] != ""){ 
-      Serial.println("Calling number " + String(n) + " ..."); 
-      call_number(phone_numbers[n]);
-      delay(5000);
-    }
+      if(phone_numbers[n] != ""){ 
+        Serial.println("Calling number " + String(n) + " ..."); 
+        call_number(phone_numbers[n]);
+        delay(5000);
+      }
 
-  }
+    }
 
   //delay(5000);
   
-  for(uint8_t m = 0; m < MAX_NUMBERS; m++){
+    for(uint8_t m = 0; m < MAX_NUMBERS; m++){
     
     //TEXT
 
-    if(phone_numbers[m] != ""){
+      if(phone_numbers[m] != ""){
       
-      Serial.println ("Sending SMS to number " + String(m) + " ...");
-      send_message(SECURITY_BREACH_SMS, phone_numbers[m]);
-      delay(5000);
+        Serial.println ("Sending SMS to number " + String(m) + " ...");
+        send_message(SECURITY_BREACH_SMS, phone_numbers[m]);
+        delay(5000);
 
+      }
     }
   }
-
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,7 +106,7 @@ void send_message(String msg, String phone_number){
 --utility function to send messages to a given phone number
 --uses gsm_serial
 */
-//Note: Implement error checking in this function
+
 
   gsm_serial.println("AT+CMGS=" + phone_number + "\r");
   delay(1000);
@@ -89,6 +114,9 @@ void send_message(String msg, String phone_number){
   delay(1000);
   gsm_serial.println((char)26);
   delay(1000);
+
+  check_gsm_error();
+  
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -99,12 +127,13 @@ void call_number(String number){
 --function used to call numbers
 --takes in a number and dials that number for 20seconds then hangs up
 */
-//Note: Implement error checking in this function
+
 
   gsm_serial.println("ATD" + number + ";\r\n");
   delay(1000);
-  print_to_serial();
-      
+  
+  check_gsm_error();
+  
   delay(20000); // wait for 20 seconds...
   gsm_serial.println("ATH");
 }
@@ -123,10 +152,49 @@ int check_gsm(){
     while(gsm_serial.available() > 0){
       char c = gsm_serial.read();
       sms_msg += c;
-      delay(10);
+      delay(5);
     }
-    Serial.println(sms_msg);
     return 1;
   }
   return 0;
 }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int check_error(String msg){
+  
+  //checks for error messages from gsm_serial
+  //if any returns 1
+  //otherwise return 0
+
+  if(msg.indexOf("ERROR") >= 0){
+    return 1;
+  }
+  return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void sms_cleanup(){
+  sms_msg = "";
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+int check_gsm_error(){
+  
+  //checks for error messages from gsm_serial
+  //if any returns 1
+  //otherwise return 0
+
+  check_gsm();
+  if(check_error(sms_msg)){
+    Serial.println();
+    Serial.println("ERROR: NO CREDIT ON SIM CARD");
+    Serial.println();
+  }
+  sms_cleanup();
+  
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

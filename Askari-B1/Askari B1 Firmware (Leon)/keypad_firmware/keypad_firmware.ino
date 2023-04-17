@@ -39,8 +39,8 @@ void setup(){
 }
   
 void loop(){
-
-  if(check_serial()){
+  int incoming_data = check_serial();
+  if(incoming_data){
     resolve_serial_msg();
     data_from_serial = "";  
   }
@@ -48,11 +48,13 @@ void loop(){
   char key_pressed = customKeypad.getKey();
   
   if (key_pressed){
-    Serial.println(key_pressed);
+//    Serial.println();
+//    Serial.println(key_pressed);
     if(key_pressed == '#'){
       byte valid_input = check_data(data_from_keypad);
       if(valid_input){
         Serial.print(data_from_keypad);
+        delay(1000);
       }
       keypad_input_cleanup();
     } else if(key_pressed == '*'){
@@ -65,8 +67,11 @@ void loop(){
       indicator_led++;  
     } else {
       data_from_keypad += key_pressed;
-      update_led_indicators();
-      indicator_led++;
+      if((data_from_keypad.length() > 6 && inputing_new_passcode)
+        || (!inputing_new_passcode)){
+        update_led_indicators();
+        indicator_led++;
+      }
     }
   }
 }
@@ -97,6 +102,9 @@ void keypad_input_cleanup(){
   data_from_keypad = "";
   inputing_new_passcode = 0;
   indicator_led = 1;
+  for(byte i = 0; i < 5; i++){
+    digitalWrite(led_indicator_pins[i], LOW);
+  }
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -111,11 +119,11 @@ byte check_data(String data){
       flash_leds(2, 200);
       return 0;
     }
-  } else {
-    if(data_from_keypad.length() != 4){
+  } else if(data_from_keypad.length() != 4){
       flash_leds(2, 200);
       return 0;
-    }
+  } else {
+    return 1;
   }
 }
 
@@ -126,6 +134,13 @@ void flash_leds(byte number_of_flashes, long int delay_duration){
   //utility function to flash leds
   
   for(uint8_t i = 0; i < number_of_flashes; i++){
+
+    for(uint8_t j = 0; j < 4; j++){
+      digitalWrite(led_indicator_pins[j + 1], LOW);
+    }
+    
+    delay(delay_duration);
+    
     for(uint8_t j = 0; j < 4; j++){
       digitalWrite(led_indicator_pins[j + 1], HIGH);
     }
@@ -145,7 +160,7 @@ void flash_leds(byte number_of_flashes, long int delay_duration){
 void resolve_serial_msg(){
 
   //outputs different flashing signals showing alarm system response
-  
+  Serial.println(data_from_serial);
   if(data_from_serial.indexOf("INVALID PASSCODE") >= 0){
     flash_leds(3, 200);
   }

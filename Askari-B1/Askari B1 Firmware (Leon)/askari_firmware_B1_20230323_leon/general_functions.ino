@@ -207,7 +207,7 @@ void sound_alarm(){
   if(buzzer_action_time_up){
     reset_buzzer_timer();
     buzzer_timer_started = 0;
-    alarm_state = 0;
+//    alarm_state = 0;
     delay(1000);
     intruder_alert();
   }
@@ -236,7 +236,6 @@ void alarm_state_cleanup(){
   reset_buzzer_timer();
   buzzer_timer_started = 0;
   alarm_state = 0;
-  digitalWrite(Buzzer, 0);
   digitalWrite(actionRelay, 0);
 }
 
