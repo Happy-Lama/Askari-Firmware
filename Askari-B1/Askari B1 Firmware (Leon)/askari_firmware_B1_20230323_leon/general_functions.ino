@@ -237,6 +237,10 @@ void alarm_state_cleanup(){
   buzzer_timer_started = 0;
   alarm_state = 0;
   digitalWrite(actionRelay, 0);
+  
+  for(uint8_t i = 0; i < 7; i++){
+    digitalWrite(zone_state_indicator[i], LOW);
+  }
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -260,4 +264,53 @@ int buzzer_timer(long int duration, bool start_timer){
     }
   }
   
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void sim_card_error_alert(){
+
+/*
+--sounds buzzer every 10 seconds 
+  and blink the first zone_state_indicator led
+  to show that there is a sim card error
+*/
+
+  toggle_buzzer(100,9900); 
+  
+  int buzzer_timer_action_time_up = buzzer_timer(SIM_CARD_ERROR_BUZZER_DURATION, 1);
+//  digitalWrite(zone_state_indicator[0], LOW);
+//  delay(200);
+  
+  if(buzzer_timer_action_time_up){
+    digitalWrite(zone_state_indicator[0], HIGH);
+    delay(200);
+    digitalWrite(zone_state_indicator[0], LOW);
+    delay(200); 
+    reset_buzzer_timer();
+  }
+}
+
+void no_credit_error_alert(){
+
+/*
+--sounds buzzer every 5 seconds 
+  and blink the first two zone_state_indicator leds
+  to show that there is no credit on the sim card
+*/
+
+  toggle_buzzer(100,4900); 
+  
+  int buzzer_timer_action_time_up = buzzer_timer(NO_CREDIT_ERROR_BUZZER_DURATION, 1);
+
+  if(buzzer_timer_action_time_up){
+
+    digitalWrite(zone_state_indicator[0], HIGH);
+    digitalWrite(zone_state_indicator[1], HIGH);
+    delay(200);
+    digitalWrite(zone_state_indicator[0], LOW);
+    digitalWrite(zone_state_indicator[1], LOW);
+    delay(200);
+    reset_buzzer_timer();
+  }
 }

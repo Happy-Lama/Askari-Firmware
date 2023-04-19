@@ -15,23 +15,24 @@ void intruder_alert_call(){
     Serial.println();
 
     gsm_serial.println("AT");
-  delay(1000);
+    delay(1000);
 
-  gsm_serial.println("AT+CMGF=1");
-  delay(100);
+    gsm_serial.println("AT+CMGF=1");
+    delay(100);
   
-  gsm_serial.println("AT+CNMI=2,2,0,0,0");
-  delay(100);
+    gsm_serial.println("AT+CNMI=2,2,0,0,0");
+    delay(100);
 
   //check for any sim card error
-  check_gsm();
-  if(check_error(sms_msg)){
-    sim_card_error = 1;
-  } else {
-    sim_card_error = 0;
-  }
-  Serial.println(sms_msg);
-  sms_cleanup();
+
+    check_gsm();
+    if(check_error(sms_msg)){
+      sim_card_error = 1;
+    } else {
+      sim_card_error = 0;
+    }
+    Serial.println(sms_msg);
+    sms_cleanup();
     
   } else {
     Serial.println("Intruder Alert Call");
@@ -176,6 +177,9 @@ int check_error(String msg){
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 void sms_cleanup(){
+  
+  //clear sms_msg variable
+  
   sms_msg = "";
 }
 
@@ -189,6 +193,7 @@ int check_gsm_error(){
 
   check_gsm();
   if(check_error(sms_msg)){
+    no_credit_error = 1;
     Serial.println();
     Serial.println("ERROR: NO CREDIT ON SIM CARD");
     Serial.println();
